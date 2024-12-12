@@ -24,7 +24,7 @@ app.use(express.static(process.cwd() + '/public/js'))
 
 // Config Cors !Importante cuando se hostee en un servidor añadir el enlace
 app.use(cors({
-    origin: ["http://127.0.0.1:3000", "http://localhost:3000"] // Añadir todos los orígenes necesarios
+    origin: ["http://127.0.0.1:3000", "http://localhost:3000", "https://uniqmarket-production.up.railway.app"] // Añadir todos los orígenes necesarios
 }));
 
 app.post('/api/auth/register', register);

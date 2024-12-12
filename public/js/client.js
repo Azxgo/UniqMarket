@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const minPriceValue = minPrice;
         const maxPriceValue = maxPrice;
 
-        let url = `http://localhost:3000/products?page=${page}&limit=${limit}&order=${order}`;
+        let url = `https://uniqmarket-production.up.railway.app/products?page=${page}&limit=${limit}&order=${order}`;
         
         if (search) {
             url += `&search=${search}`;  // Solo incluir el parámetro search si existe
