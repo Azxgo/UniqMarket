@@ -2,10 +2,10 @@ import mysql from 'mysql2/promise'
 
 //Poner aqui Credenciales de la base de datos
 const config = {
-    host: "localhost",
-    user: "root",
-    password: "12345",
-    database: "uniqmarket_db"
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_DATABASE
 }
 
 const connection = await mysql.createConnection(config)
