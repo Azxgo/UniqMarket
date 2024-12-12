@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniqMarket</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/js/product.js"></script>
+    <script src="shared.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="./index.html"><img src="./img/logo.png" alt="logo" id="logo"></a>
+            <div class="categorias">
+                <button class="menu-button" onclick="toggleMenu()">
+                    <span><img src="./img/icons/menu.png" alt="Menú"></span>
+                    <span>Menu</span>
+                </button>
+                <div class="dropdown-menu" id="menu-dropdown">
+                    <a href="./index.html">Inicio</a>
+                    <a href="./shop.html">Tienda</a>
+                </div>
+            </div>
+            <div class="container-searchbar">
+                <form action="shop.html" method="get">
+                    <input type="search" placeholder="Buscar productos" name="search" class="search-bar">
+                    <button class="search-button" type="submit">
+                        <img alt="Buscar" width="18" height="18" src="https://home.ripley.cl/rdex/navbarcomponent/search-icon.svg">
+                    </button>
+                </form>
+            </div>
+            <div class="login-buttons">
+                <div class="user-info">
+                    <a id="user-button" class="auth-button">Iniciar Sesión</a>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <button id="edit-user">Editar Usuario</button>
+                        <button id="delete-user">Eliminar Usuario</button>
+                    </div>
+                </div>
+                <a href="register.html" id="register-button" class="auth-button">Registrarse</a>
+                <a href="./cart.html" id="cart"><img src="./img/icons/shopping-cart2.png" alt="Carrito" id="imgCart"><span id="cart-count">0</span></a>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <section class="container">
+            <div class="container product-container">
+                <div class="product-img">
+                    <img src="">
+                </div>
+                <div class="caracteristicas-prod">
+                    <span class="marca"></span>
+                    <h1></h1>
+                    <span class="sku"></span>
+                    <h2></h2>
+                    <p>Vendido por:</p>
+                    <h4>🌟🌟🌟🌟🌟</h4>
+                    <button id="add-to-cart">Agregar al carrito</button>
+                    <div class="descripcion">
+                        <h3>Descripción</h3>
+                        <p></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <div class="about">
+            <h5>Sobre UniqMarket</h5>
+            <a>Contacto</a>
+        </div>
+        <div class="logofooter">
+            <a href="./index.html"><img src="./img/logo.png" alt="logo" id="logo"></a>
+            <p>©2024 UniqMarket</p>
+            <p>Creado por Agustin Moreira y el team</p>
+        </div>
+        <div class="socials">
+            <a href="/"><img src="img/icons/instagram.svg" class="icon"></a>
+            <a href="/"><img src="img/icons/facebook.svg" class="icon"></a>
+            <a href="/"><img src="img/icons/youtube.svg" class="icon"></a>
+            <a href="/"><img src="img/icons/tik-tok.svg" class="icon"></a>
+        </div>
+    </footer>
+</body>
+
+<script src="/js/script.js"></script>
+<script>
+    window.addEventListener('storage', updateUserName);
+
+window.onload = function() {
+    updateUserName();
+    const userName = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    const userButton = document.getElementById('user-button');
+    const registerButton = document.getElementById('register-button');
+    const loginButtons = document.querySelector('.login-buttons');
+    
+    if (token) {
+        userButton.textContent = `Bienvenido, ${userName}`;
+        userButton.addEventListener('click', toggleDropdownUser); // Mostrar el menú desplegable
+        
+        registerButton.style.display = 'none';
+
+        // Crear el botón de cerrar sesión y agregarlo al lado del mensaje de bienvenida
+        const logoutButton = document.createElement('button');
+        logoutButton.textContent = 'Cerrar sesión';
+        logoutButton.addEventListener('click', logout);
+        logoutButton.classList.add('logout-button');
+        document.querySelector('.user-info').appendChild(logoutButton);
+
+        // Añadir clase para mostrar ambos botones juntos
+        loginButtons.classList.add('user-logged-in');
+    } else {
+        userButton.textContent = 'Iniciar Sesión';
+        userButton.setAttribute('href', 'login.html');
+        registerButton.textContent = 'Registrarse';
+    }
+};
+
+function toggleDropdown() {
+    const dropdown = document.querySelector('.dropdown-menu');
+    dropdown.classList.toggle('show');
+}
+
+function toggleDropdownUser() {
+const dropdown = document.getElementById('user-dropdown');
+dropdown.classList.toggle('show');
+}
+
+function toggleMenu() {
+    const menuDropdown = document.getElementById('menu-dropdown');
+    menuDropdown.classList.toggle('show');
+}
+
+function updateUserName() {
+const userName = localStorage.getItem('user');
+const userButton = document.getElementById('user-button');
+if (userName) {
+    userButton.textContent = `Bienvenido, ${userName}`;
+} else {
+    userButton.textContent = 'Iniciar Sesión';
+}
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/index.html';
+}
+
+document.getElementById('delete-user').addEventListener('click', async () => {
+const token = localStorage.getItem('token');
+if (!token) {
+    alert('No has iniciado sesión.');
+    return;
+}
+
+const confirmation = confirm('¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible.');
+if (!confirmation) return;
+
+try {
+    // Llamada al backend para eliminar el usuario
+    const response = await fetch('/api/auth/delete', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        alert(result.message || 'Error al eliminar la cuenta.');
+        return;
+    }
+
+    // Eliminar datos de localStorage y redirigir
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    alert('Cuenta eliminada correctamente.');
+    window.location.href = '/index.html';
+} catch (error) {
+    console.error('Error al eliminar la cuenta:', error);
+    alert('Hubo un problema al intentar eliminar tu cuenta. Por favor, intenta de nuevo.');
+}
+});
+
+document.getElementById('edit-user').addEventListener('click', () => {
+window.location.href = 'edit-user.html';
+});
+
+</script>
+</html>

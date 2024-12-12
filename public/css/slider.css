@@ -1,0 +1,56 @@
+/* Contenedor del slider */
+.slider-wrapper {
+    position: relative;
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 0 0 20px;
+    width: 100%;
+    overflow: hidden; /* Evita el desbordamiento */
+    border-radius: 20px; /* Aplica el border-radius al contenedor */
+}
+
+/* Contenedor de las imágenes */
+.slider {
+    display: flex;
+    transition: transform 0.5s ease; /* Transición suave */
+}
+
+/* Estilo de las imágenes */
+.slider img {
+    flex: 1 0 100%;
+    object-fit: cover;
+    width: 100%;
+    height: 350px; /* Define una altura fija */
+    border-radius: 20px; /* Aplica border-radius a las imágenes */
+}
+
+/* Controles de navegación */
+.slider-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    position: absolute;
+    bottom: 1.80rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+/* Estilos para los botones de navegación */
+.nav-btn {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: #fff;
+    opacity: 0.75;
+    cursor: pointer;
+    display: block;
+}
+
+.nav-btn:hover {
+    background-color: #ddd;
+}
+
+.nav-btn.active {
+    background-color: #2196F3; /* Color activo para el botón */
+}
