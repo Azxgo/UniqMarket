@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+
+</head>
+
+<body>
+    <header>Panel de Administracion</header>
+    <main>
+        <div class="form-container">
+            <h2>Añadir Producto</h2>
+            <form id="productForm">
+                <input type="hidden" id="product_id" />
+                <input type="text" id="brand" placeholder="Marca" required />
+                <input type="text" id="name" placeholder="Nombre" required />
+                <textarea id="description" placeholder="Descripcion" required></textarea>
+                <input type="text" id="sku" placeholder="SKU" required />
+                <input type="number" id="price" placeholder="Precio" step="0.01" required />
+                <input type="number" id="stock" placeholder="Stock" required />
+                <input type="number" id="category_id" placeholder="Categoria ID" />
+                <input type="number" id="sold_by" placeholder="Vendido por" />
+                <input type="text" id="image_url" placeholder="Imagen URL" />
+                <button type="submit">Guardar</button>
+            </form>
+        </div>
+
+        <h2>Lista de productos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Marca</th>
+                    <th>Nombre</th>
+                    <th>Descripcion</th>
+                    <th>SKU</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+        </table>
+    </main>
+    <script>
+        const productTable = document.getElementById('productTable');
+        const productForm = document.getElementById('productForm');
+
+        async function fetchProducts() {
+            try {
+                const res = await fetch('/adminProd');
+                const products = await res.json();
+
+                if (!Array.isArray(products)) throw new Error('API did not return an array.');
+
+                productTable.innerHTML = products.map(product => `
+      <tr>
+        <td>${product.product_id}</td>
+        <td>${product.brand}</td>
+        <td>${product.name}</td>
+        <td>${product.description}</td>
+        <td>${product.sku}</td>
+        <td>$${product.price}</td>
+        <td>${product.stock}</td>
+        <td>
+           <button class="edit-btn" onclick="loadProductForEditing(${product.product_id})">Editar</button>
+          <button class="delete-btn" onclick="deleteProduct(${product.product_id})">Borrar</button>
+        </td>
+      </tr>
+    `).join('');
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                productTable.innerHTML = '<tr><td colspan="8">Error para cargar productos.</td></tr>';
+            }
+        }
+
+        async function addProduct(e) {
+            e.preventDefault();
+            const formData = new FormData(productForm);
+            const product = Object.fromEntries(formData.entries());
+            await fetch('/adminProd', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+            fetchProducts();
+            productForm.reset();
+        }
+
+        async function loadProductForEditing(productId) {
+            try {
+                const res = await fetch(`/adminProd/${productId}`);
+                const product = await res.json();
+
+                // Llenar el formulario
+                document.getElementById('product_id').value = product.product_id;
+                document.getElementById('brand').value = product.brand;
+                document.getElementById('name').value = product.name;
+                document.getElementById('description').value = product.description;
+                document.getElementById('sku').value = product.sku;
+                document.getElementById('price').value = product.price;
+                document.getElementById('stock').value = product.stock;
+                document.getElementById('category_id').value = product.category_id || '';
+                document.getElementById('sold_by').value = product.sold_by || '';
+                document.getElementById('image_url').value = product.image_url || '';
+
+                // Cambiar texto del botón de envío
+                document.querySelector('#productForm button[type="submit"]').textContent = 'Actualizar';
+
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Desplazamiento suave hacia arriba
+            } catch (error) {
+                console.error('Error loading product for editing:', error);
+            }
+        }
+
+        async function submitProductForm(e) {
+            e.preventDefault();
+
+            const productId = document.getElementById('product_id').value;
+            const productData = {
+                brand: document.getElementById('brand').value,
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                sku: document.getElementById('sku').value,
+                price: parseFloat(document.getElementById('price').value),
+                stock: parseInt(document.getElementById('stock').value),
+                category_id: document.getElementById('category_id').value || null,
+                sold_by: document.getElementById('sold_by').value || null,
+                image_url: document.getElementById('image_url').value || null,
+            };
+
+            try {
+                const method = productId ? 'PUT' : 'POST';
+                const endpoint = productId ? `/adminProd/${productId}` : '/adminProd';
+
+                await fetch(endpoint, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData),
+                });
+
+                alert(productId ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
+
+                // Resetear el formulario
+                document.getElementById('productForm').reset();
+                document.getElementById('product_id').value = '';
+                document.querySelector('#productForm button[type="submit"]').textContent = 'Guardar';
+
+                // Actualizar la tabla de productos
+                fetchProducts();
+            } catch (error) {
+                console.error('Error actualizando producto:', error);
+            }
+        }
+
+        document.getElementById('productForm').addEventListener('submit', submitProductForm);
+
+        async function deleteProduct(id) {
+            await fetch(`/adminProd/${id}`, { method: 'DELETE' });
+            fetchProducts();
+        }
+
+        productForm.addEventListener('submit', addProduct);
+        fetchProducts();
+    </script>
+</body>
+
+</html>

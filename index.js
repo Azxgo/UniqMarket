@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { register, login, deleteUser, updateUser, getUser } from './controllers/authController.js';
+import isAdmin from './middlewares/verification.js'; 
+import cookieParser from 'cookie-parser';
 
 
 
@@ -14,10 +16,12 @@ const __dirname = path.dirname(__filename);
 
 // Configuración Express
 const app = express()
+
 const port = process.env.port ?? 3000
 
 // MiddleWares
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.static(process.cwd() + '/public'))
 app.use(express.static(process.cwd() + '/public/css'))
 app.use(express.static(process.cwd() + '/public/js'))
@@ -33,6 +37,7 @@ app.post('/api/auth/login', login);
 // Rutas
 app.get("/", (req, res) => res.sendFile(process.cwd() + '/public/index.html'))
 app.get("/shop", (req, res) => res.sendFile(process.cwd() + '/public/shop.html'))
+app.get('/admin', isAdmin, (req,res) => res.sendFile(process.cwd() + '/admin.html'));
 app.delete('/api/auth/delete', deleteUser);
 app.put('/api/auth/update', updateUser);
 app.get('/api/auth/user', getUser);
@@ -132,6 +137,80 @@ app.get('/products/:id', async (req, res) => {
         res.status(500).json({ message: 'Error fetching product' });
     }
 });
+
+app.get('/adminProd', async (req, res) => {
+    try {
+      const [results] = await connection.query('SELECT * FROM products'); // Usando promesas
+      res.json(results); // Devuelve el resultado como un array de objetos
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      res.status(500).json({ error: 'Failed to fetch products.' });
+    }
+  });
+
+  app.get('/adminProd/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [results] = await connection.query('SELECT * FROM products WHERE product_id = ?', [id]);
+  
+      if (results.length === 0) {
+        res.status(404).json({ error: 'Product not found.' });
+      } else {
+        res.json(results[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      res.status(500).json({ error: 'Failed to fetch product.' });
+    }
+  });
+
+  app.post('/adminProd', async (req, res) => {
+    try {
+      const { brand, name, description, sku, price, stock, category_id, sold_by, image_url } = req.body;
+      const query = `
+        INSERT INTO products 
+        (brand, name, description, sku, price, stock, category_id, sold_by, image_url) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      await connection.query(query, [brand, name, description, sku, price, stock, category_id, sold_by, image_url]);
+      res.status(201).send('Product created successfully.');
+    } catch (err) {
+      console.error('Error creating product:', err);
+      res.status(500).json({ error: 'Failed to create product.' });
+    }
+  });
+  
+  app.put('/adminProd/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { brand, name, description, sku, price, stock, category_id, sold_by, image_url } = req.body;
+  
+      const query = `
+        UPDATE products 
+        SET brand = ?, name = ?, description = ?, sku = ?, price = ?, stock = ?, category_id = ?, sold_by = ?, image_url = ? 
+        WHERE product_id = ?
+      `;
+      await connection.query(query, [brand, name, description, sku, price, stock, category_id, sold_by, image_url, id]);
+  
+      res.send('Product updated successfully.');
+    } catch (err) {
+      console.error('Error updating product:', err);
+      res.status(500).json({ error: 'Failed to update product.' });
+    }
+  });
+  
+  app.delete('/adminProd/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const query = 'DELETE FROM products WHERE product_id = ?';
+      await connection.query(query, [id]);
+      res.send('Product deleted successfully.');
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      res.status(500).json({ error: 'Failed to delete product.' });
+    }
+  });
+
 
 app.listen(port,() => {
     console.log(`server listening on port http://localhost:${port}`)

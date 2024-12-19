@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const response = await fetch(`https://uniqmarket-production.up.railway.app/products/${productId}`);
+        const response = await fetch(`/products/${productId}`);
         if (!response.ok) {
             throw new Error('Error al obtener el producto');
         }

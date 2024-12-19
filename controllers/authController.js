@@ -29,18 +29,33 @@ export const login = async (req, res) => {
 
         // Generar el JWT
         const token = jwt.sign(
-            { userId: userData[0].user_id }, // Solo `userId`, no el nombre
+            {
+                userId: userData[0].user_id,
+                role: userData[0].role
+            },
             'your_secret_key',
             { expiresIn: '1h' }
         );
-        console.log(token)
 
-        // Enviar el JWT y el nombre de usuario en la respuesta
+        console.log('Generated Token:', token);
+
+        // Establecer el token en una cookie
+        res.cookie('token', token, {
+            httpOnly: true,  // No accesible desde JavaScript
+            secure: process.env.NODE_ENV === 'production', // Solo si es producción
+            expires: new Date(Date.now() + 3600000) // Expira en 1 hora
+        });
+
+        // Determinar la redirección según el rol
+        let redirectUrl = "/shop.html";
+        if (userData[0].role === "admin") {
+            redirectUrl = "/admin";
+        }
+
         return res.status(200).json({
             status: "ok",
             message: "Inicio de sesión exitoso",
-            redirect: "/shop.html",
-            token,
+            redirect: redirectUrl,
             user: userData[0].name
         });
     } catch (err) {
