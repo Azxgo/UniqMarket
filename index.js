@@ -211,6 +211,52 @@ app.get('/adminProd', async (req, res) => {
     }
   });
 
+  app.post('/api/checkout', async (req, res) => {
+
+    try {
+        const { cart } = req.body;
+
+        if (!cart || cart.length === 0) {
+            return res.status(400).json({ message: 'El carrito está vacío.' });
+        }
+
+        // Iniciar una transacción para garantizar consistencia
+        await connection.beginTransaction();
+
+        for (const item of cart) {
+            // Verificar stock disponible
+            const [rows] = await connection.query(
+                'SELECT stock FROM products WHERE product_id = ?',
+                [item.id]
+            );
+
+            if (!rows.length) {
+                throw new Error(`Producto con ID ${item.id} no encontrado.`);
+            }
+
+            const stockDisponible = rows[0].stock;
+
+            if (stockDisponible < item.amount) {
+                throw new Error(
+                    `Stock insuficiente para el producto ${item.name}. Disponible: ${stockDisponible}, solicitado: ${item.amount}.`
+                );
+            }
+
+            // Restar el stock
+            await connection.query(
+                'UPDATE products SET stock = stock - ? WHERE product_id = ?',
+                [item.amount, item.id]
+            );
+        }
+
+        // Confirmar la transacción
+        await connection.commit();
+
+        res.status(200).json({ message: 'Compra realizada con éxito. El stock ha sido actualizado.' });
+    } catch (error) {
+        console.error('Error en el proceso de compra:', error);
+    }
+  })
 
 app.listen(port,() => {
     console.log(`server listening on port http://localhost:${port}`)

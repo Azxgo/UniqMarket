@@ -43,16 +43,41 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Función de compra
-    buyButton.addEventListener('click', () => {
+    buyButton.addEventListener('click', async () => {
         if (cart.length === 0) {
             alert('El carrito está vacío.');
             return;
         }
-        alert('Compra realizada con éxito.');
-        cart.length = 0;  // Limpiar el carrito
-        localStorage.removeItem('cart');
-        renderCart();
-        updateCartCount(); // Actualizar el contador
+    
+        try {
+            console.log('Enviando carrito al servidor:', cart); // Debugging
+    
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cart }), // Enviar el carrito directamente
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`Error en la compra: ${errorData.message || 'Error desconocido.'}`);
+                return;
+            }
+    
+            const data = await response.json();
+            alert(data.message || 'Compra realizada con éxito.');
+    
+            // Vaciar el carrito después de una compra exitosa
+            cart.length = 0;
+            localStorage.removeItem('cart');
+            renderCart();
+            updateCartCount();
+        } catch (error) {
+            console.error('Error al procesar la compra:', error);
+            alert('Hubo un error al procesar tu compra. Por favor, intenta nuevamente.');
+        }
     });
 
     // Función para reiniciar el carrito
@@ -61,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cart.length = 0;  // Limpiar el carrito
             localStorage.removeItem('cart');
             renderCart();
-            updateCartCount(); // Actualizar el contador
+            updateCartCount();  // Actualizar el contador
         }
     });
 
