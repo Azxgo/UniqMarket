@@ -14,12 +14,17 @@ const isAdmin = (req, res, next) => {
         const decoded = jwt.verify(token, 'your_secret_key');
         console.log('Decoded Token:', decoded);
 
+        // Verificar si hay una sesión activa
+        if (!req.session || !req.session.userId) {
+            return res.status(401).json({ status: 'Error', message: 'No autorizado: Sesión no encontrada' });
+        }
+
         // Verificar si el rol es 'admin'
         if (decoded.role !== 'admin') {
             return res.status(403).json({ status: 'Error', message: 'Acceso prohibido: No tiene permisos de administrador' });
         }
 
-        // Si es admin, continuar con la siguiente función (ruta)
+        // Si es admin y la sesión es válida, continuar con la siguiente función (ruta)
         next();
     } catch (err) {
         console.error('Error al verificar el token:', err);
