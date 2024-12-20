@@ -23,7 +23,7 @@ const isAdmin = (req, res, next) => {
         next();
     } catch (err) {
         console.error('Error al verificar el token:', err);
-        return res.status(500).json({ status: 'Error', message: 'Error al verificar el token' });
+        return res.status(401).json({ status: 'Error', message: 'Token inválido o expirado' });
     }
 };
 
