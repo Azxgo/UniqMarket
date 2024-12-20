@@ -8,20 +8,27 @@ import jwt from 'jsonwebtoken';
 export const login = async (req, res) => {
     const { user, email, password } = req.body;
 
-    if (!user || !email || !password) {
-        return res.status(400).json({ status: "Error", message: "Los campos están incompletos" });
+    // Validación de los campos requeridos
+    if (!user && !email) {
+        return res.status(400).json({ status: "Error", message: "Debe proporcionar el usuario o el correo electrónico" });
+    }
+    if (!password) {
+        return res.status(400).json({ status: "Error", message: "La contraseña es obligatoria" });
     }
 
     try {
+        // Consulta a la base de datos
         const [userData] = await connection.execute(
             "SELECT * FROM users WHERE name = ? OR email = ?",
-            [user, email]
+            [user || "", email || ""]
         );
 
-        if (userData.length === 0) {
+        // Verificar si el usuario o correo existe
+        if (!userData || userData.length === 0) {
             return res.status(400).json({ status: "Error", message: "El usuario o correo no existe" });
         }
 
+        // Verificar la contraseña
         const isMatch = await bcryptjs.compare(password, userData[0].password);
         if (!isMatch) {
             return res.status(400).json({ status: "Error", message: "Contraseña incorrecta" });
@@ -34,24 +41,22 @@ export const login = async (req, res) => {
                 role: userData[0].role
             },
             'your_secret_key',
-            { expiresIn: '1h' }
+            { expiresIn: '1h' } // Expiración de 1 hora
         );
 
         console.log('Generated Token:', token);
 
-        // Establecer el token en una cookie
+        // Establecer el token en una cookie segura
         res.cookie('token', token, {
-            httpOnly: true,  // No accesible desde JavaScript
-            secure: process.env.NODE_ENV === 'production', // Solo si es producción
+            httpOnly: true,  // No accesible desde JavaScript para mayor seguridad
+            secure: process.env.NODE_ENV === 'production', // Sólo en HTTPS si es producción
             expires: new Date(Date.now() + 3600000) // Expira en 1 hora
         });
 
-        // Determinar la redirección según el rol
-        let redirectUrl = "/shop.html";
-        if (userData[0].role === "admin") {
-            redirectUrl = "/admin";
-        }
+        // Determinar la redirección según el rol del usuario
+        const redirectUrl = userData[0].role === "admin" ? "/admin" : "/shop.html";
 
+        // Responder con éxito y redirección
         return res.status(200).json({
             status: "ok",
             message: "Inicio de sesión exitoso",
@@ -59,7 +64,7 @@ export const login = async (req, res) => {
             user: userData[0].name
         });
     } catch (err) {
-        console.error(err);
+        console.error('Error en el login:', err.message);
         return res.status(500).json({ status: "Error", message: "Error en el servidor" });
     }
 };

@@ -2,11 +2,14 @@ import jwt from 'jsonwebtoken';
 
 const isAdmin = (req, res, next) => {
     // Obtener el token desde las cookies
-    const token = req.cookies.token;
+    const token = req.cookies?.token; // Uso seguro del operador opcional
     console.log('Token recibido:', token);
 
     if (!token) {
-        return res.status(401).json({ status: 'Error', message: 'No autorizado: Token no encontrado' });
+        return res.status(401).json({ 
+            status: 'Error', 
+            message: 'No autorizado: Token no encontrado' 
+        });
     }
 
     try {
@@ -14,21 +17,25 @@ const isAdmin = (req, res, next) => {
         const decoded = jwt.verify(token, 'your_secret_key');
         console.log('Decoded Token:', decoded);
 
-        // Verificar si hay una sesión activa
-        if (!req.session || !req.session.userId) {
-            return res.status(401).json({ status: 'Error', message: 'No autorizado: Sesión no encontrada' });
+        // Verificar si la sesión está activa y el usuario tiene el rol de admin
+        if (!decoded.role || decoded.role !== 'admin') {
+            return res.status(403).json({ 
+                status: 'Error', 
+                message: 'Acceso prohibido: No tiene permisos de administrador' 
+            });
         }
 
-        // Verificar si el rol es 'admin'
-        if (decoded.role !== 'admin') {
-            return res.status(403).json({ status: 'Error', message: 'Acceso prohibido: No tiene permisos de administrador' });
-        }
+        // Adjuntar los datos decodificados al objeto `req` para su uso posterior
+        req.user = decoded;
 
-        // Si es admin y la sesión es válida, continuar con la siguiente función (ruta)
+        // Continuar con la siguiente función o ruta
         next();
     } catch (err) {
-        console.error('Error al verificar el token:', err);
-        return res.status(401).json({ status: 'Error', message: 'Token inválido o expirado' });
+        console.error('Error al verificar el token:', err.message);
+        return res.status(401).json({ 
+            status: 'Error', 
+            message: 'Token inválido o expirado' 
+        });
     }
 };
 
